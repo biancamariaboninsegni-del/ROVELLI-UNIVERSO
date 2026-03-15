@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Universo di Bianca — Fascio di Luce e Buchi Bianchi</title>
+<style>
+  html,body { height:100%; margin:0; background:#000; color:#eee; font-family: 'Segoe UI', Roboto, sans-serif; overflow: hidden; }
+  #container { position:relative; height:100%; width: 100%; }
+  canvas { display:block; width:100%; height:100%; }
+  
+  /* HUD - Istruzioni */
+  #hud {
+    position:absolute; left:20px; top:20px; z-index:100; 
+    background:rgba(0,0,0,0.4); padding:15px; border-radius:12px;
+    backdrop-filter: blur(8px); max-width:280px; border: 1px solid rgba(255,255,255,0.1);
+    pointer-events: none; transition: opacity 0.5s;
+  }
+  #hud b { color:#fff; display: block; margin-bottom: 5px; }
+  
+  /* White Hole Overlay */
+  #whitehole {
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center; z-index:200;
+    background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0.95) 100%);
+    visibility:hidden; opacity:0; transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  #whitehole.visible { visibility:visible; opacity:1; }
+  
+  #wh-card { 
+    max-width:600px; background:rgba(10,10,10,0.8); padding:40px; border-radius:20px; 
+    text-align:center; backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 0 50px rgba(255,255,255,0.05);
+  }
+  
+  h1 { font-weight: 300; letter-spacing: 2px; margin-bottom: 20px; }
+  p { line-height: 1.6; color: #ccc; font-size: 1.1em; }
+  
+  #closeBtn { 
+    margin-top:30px; padding:12px 30px; background:transparent; color:#fff; 
+    border: 1px solid #fff; border-radius:30px; cursor:pointer; 
+    transition: all 0.3s; text-transform: uppercase; letter-spacing: 1px;
+  }
+  #closeBtn:hover { background: #fff; color: #000; }
+
+  /* Canvas per l'animazione del buco bianco */
+  #wh-canvas { position:absolute; inset:0; z-index:150; pointer-events:none; }
+</style>
+</head>
+<body>
+
+<div id="container">
+  <canvas id="c"></canvas>
+  <canvas id="wh-canvas"></canvas>
+
+  <div id="hud">
+    <b>Architettura di un pensiero</b>
+    <small>Muovi il cursore per esplorare. Clicca una particella per innescare il Quantum Bounce.</small>
+  </div>
+
+  <div id="whitehole">
+    <div id="wh-card">
+      <h1>BUCO BIANCO</h1>
+      <p>«La realtà non è come ci appare». Nella gravità quantistica, un buco bianco è il rimbalzo di un buco nero. È il tempo che si inverte, la materia che riemerge, il silenzio che diventa luce.</p>
+      <button id="closeBtn">Ritorna al Fascio</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const whCanvas = document.getElementById('wh-canvas');
+const whCtx = whCanvas.getContext('2d');
+const whOverlay = document.getElementById('whitehole');
+const closeBtn = document.getElementById('closeBtn');
+
+let w, h;
+function resize() {
+  w = canvas.width = whCanvas.width = window.innerWidth;
+  h = canvas.height = whCanvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// Colori dinamici basati sull'ora
+const hour = new Date().getHours();
+const isNight = hour < 6 || hour > 20;
+const beamColor = isNight ? 'rgba(100, 150, 255,' : 'rgba(255, 200, 150,';
+
+/* --- Particelle --- */
+class Particle {
+  constructor() {
+    this.init();
+  }
+  init() {
+    this.x = (Math.random() - 0.5) * 300;
+    this.y = (Math.random() - 0.5) * (h * 0.8);
+    this.vx = (Math.random() - 0.5) * 0.5;
+    this.vy = (Math.random() - 0.5) * 0.5;
+    this.r = 1 + Math.random() * 2;
+    this.collapsing = false;
+  }
+  update(mx, my) {
+    if (this.collapsing) {
+      // Quantum Bounce: Implosione violenta verso il centro
+      this.vx += -this.x * 0.15;
+      this.vy += -this.y * 0.15;
+      this.vx *= 0.8;
+      this.vy *= 0.8;
+    } else {
+      // Moto Browniano e attrazione leggera al mouse
+      this.vx += (Math.random() - 0.5) *
