@@ -1,198 +1,55 @@
 <!DOCTYPE html>
-<html lang="it">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Universo di Bianca — Buchi Bianchi</title>
+    <title>Universo Bianca Test</title>
     <style>
-        /* CSS Integrato */
-        body, html {
-            margin: 0; padding: 0;
-            width: 100%; height: 100%;
-            overflow: hidden;
-            background-color: #000;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        canvas {
-            display: block;
-            cursor: crosshair;
-        }
-
-        #hud {
-            position: absolute;
-            top: 30px; left: 30px;
-            color: rgba(255, 255, 255, 0.4);
-            pointer-events: none;
-            z-index: 10;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            font-size: 11px;
-            border-left: 1px solid rgba(255, 255, 255, 0.2);
-            padding-left: 15px;
-        }
-
-        #whitehole {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, rgba(0, 0, 0, 1) 85%);
-            color: #fff;
-            visibility: hidden;
-            opacity: 0;
-            transition: opacity 1.2s ease, visibility 1.2s;
-            text-align: center;
-        }
-
-        #whitehole.visible {
-            visibility: visible;
-            opacity: 1;
-        }
-
-        .card {
-            max-width: 500px;
-            padding: 40px;
-            background: rgba(10, 10, 10, 0.7);
-            backdrop-filter: blur(20px);
-            border-radius: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        h1 { font-weight: 200; letter-spacing: 4px; margin-bottom: 20px; }
-        p { line-height: 1.8; color: #ccc; font-style: italic; }
-        
-        button {
-            margin-top: 30px;
-            padding: 10px 30px;
-            background: transparent;
-            border: 1px solid rgba(255,255,255,0.4);
-            color: #fff;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: 0.4s;
-        }
-
-        button:hover { background: #fff; color: #000; }
+        body { margin: 0; background: #050505; overflow: hidden; color: white; font-family: sans-serif; }
+        canvas { display: block; }
+        #debug { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.5); padding: 10px; }
     </style>
 </head>
 <body>
+    <div id="debug">Se vedi questo testo e un cerchio bianco che segue il mouse, il codice funziona.</div>
+    <canvas id="canvas"></canvas>
 
-    <div id="hud">
-        Architettura di un pensiero<br>
-        Fascio di Luce — Polvere Browniana<br>
-        <small style="opacity: 0.5;">Clicca per il rimbalzo quantistico</small>
-    </div>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let w, h;
 
-    <div id="whitehole">
-        <div class="card">
-            <h1>BUCO BIANCO</h1>
-            <p>«La realtà non è come ci appare. Il tempo rimbalza e la materia riemerge dal passato.»</p>
-            <button onclick="closeWH()">Ritorna al fascio</button>
-        </div>
-    </div>
-
-    <canvas id="c"></canvas>
-
-<script>
-    /* JAVASCRIPT Integrato */
-    const canvas = document.getElementById('c');
-    const ctx = canvas.getContext('2d');
-    const whOverlay = document.getElementById('whitehole');
-    
-    let w, h, particles = [];
-    let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-    let isCollapsing = false;
-
-    function resize() {
-        w = canvas.width = window.innerWidth;
-        h = canvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resize);
-    resize();
-
-    class Particle {
-        constructor() {
-            this.reset();
+        function resize() {
+            w = canvas.width = window.innerWidth;
+            h = canvas.height = window.innerHeight;
         }
-        reset() {
-            this.x = (Math.random() - 0.5) * 200;
-            this.y = (Math.random() - 0.5) * h;
-            this.vx = (Math.random() - 0.5) * 1;
-            this.vy = (Math.random() - 0.5) * 1;
-            this.r = Math.random() * 2 + 0.5;
-            this.alpha = Math.random() * 0.4 + 0.2;
-        }
-        update() {
-            if (isCollapsing) {
-                this.vx += -this.x * 0.15;
-                this.vy += -this.y * 0.15;
-                this.vx *= 0.85; this.vy *= 0.85;
-            } else {
-                this.vx += (Math.random() - 0.5) * 0.1;
-                this.vy += (Math.random() - 0.5) * 0.1;
-                this.vx *= 0.98; this.vy *= 0.98;
-                if (Math.abs(this.x) > 130) this.vx *= -1;
-                if (Math.abs(this.y) > h/2) this.vy *= -1;
-            }
-            this.x += this.vx;
-            this.y += this.vy;
-        }
-        draw() {
+        window.onresize = resize;
+        resize();
+
+        let mouse = { x: w/2, y: h/2 };
+        window.onmousemove = (e) => { mouse.x = e.clientX; mouse.y = e.clientY; };
+
+        function draw() {
+            // Sfondo semitrasparente per l'effetto scia
+            ctx.fillStyle = 'rgba(5, 5, 5, 0.2)';
+            ctx.fillRect(0, 0, w, h);
+
+            // Disegna il fascio di luce semplificato
             ctx.beginPath();
-            ctx.fillStyle = `rgba(255, 253, 235, ${this.alpha})`;
-            ctx.arc(mouse.x + this.x, mouse.y + this.y, this.r, 0, Math.PI * 2);
+            const grad = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 150);
+            grad.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+            grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = grad;
+            ctx.arc(mouse.x, mouse.y, 150, 0, Math.PI * 2);
             ctx.fill();
+
+            // Disegna una particella di "polvere"
+            ctx.fillStyle = "white";
+            ctx.beginPath();
+            ctx.arc(mouse.x + Math.sin(Date.now()/500)*50, mouse.y + Math.cos(Date.now()/500)*50, 2, 0, Math.PI*2);
+            ctx.fill();
+
+            requestAnimationFrame(draw);
         }
-    }
-
-    for (let i = 0; i < 150; i++) particles.push(new Particle());
-
-    function animate() {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
-        ctx.fillRect(0, 0, w, h);
-
-        const g = ctx.createLinearGradient(mouse.x - 150, 0, mouse.x + 150, 0);
-        g.addColorStop(0, "transparent");
-        g.addColorStop(0.5, "rgba(255, 255, 255, 0.08)");
-        g.addColorStop(1, "transparent");
-        ctx.fillStyle = g;
-        ctx.fillRect(mouse.x - 150, 0, 300, h);
-
-        particles.forEach(p => {
-            p.update();
-            p.draw();
-        });
-        requestAnimationFrame(animate);
-    }
-
-    window.addEventListener('mousemove', e => {
-        mouse.x = e.clientX;
-        mouse.y = e.clientY;
-    });
-
-    window.addEventListener('mousedown', () => {
-        if (whOverlay.classList.contains('visible')) return;
-        isCollapsing = true;
-        setTimeout(() => {
-            whOverlay.classList.add('visible');
-        }, 700);
-    });
-
-    window.closeWH = function() {
-        whOverlay.classList.remove('visible');
-        setTimeout(() => {
-            isCollapsing = false;
-            particles.forEach(p => {
-                p.vx = (Math.random() - 0.5) * 25;
-                p.vy = (Math.random() - 0.5) * 25;
-            });
-        }, 600);
-    }
-
-    animate();
-</script>
+        draw();
+    </script>
 </body>
 </html>
